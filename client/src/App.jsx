@@ -11,7 +11,11 @@ import AuthPage from "./pages/AuthPage.jsx";
 
 function ScrollToTop() {
     const { pathname } = useLocation();
-    useEffect(() => window.scrollTo(0, 0), [pathname]);
+    // Braces matter: newer browsers return a Promise from scrollTo, which
+    // React would otherwise treat as a cleanup function and crash on.
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [pathname]);
     return null;
 }
 

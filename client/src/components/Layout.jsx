@@ -25,7 +25,9 @@ function SearchBox() {
     const [params] = useSearchParams();
     const navigate = useNavigate();
     const [q, setQ] = useState(params.get("q") || "");
-    useEffect(() => setQ(params.get("q") || ""), [params]);
+    useEffect(() => {
+        setQ(params.get("q") || "");
+    }, [params]);
 
     return (
         <Box
