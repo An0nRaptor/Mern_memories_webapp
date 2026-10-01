@@ -1,44 +1,71 @@
-<h1>Introduction</h1>
-<span>The Memories WebApp is a full-stack application built using the MERN stack. It allows users to create, view, update, and delete memories. Each memory contains a title, content, author, and a date. Users can also add tags to their memories for better categorization.</span>
-<br/>
+# Memories
 
-<h2>Features</h2>
-<ul>
-  <li>User Authentication (Register, Login, Logout)
-  <li>Create, Read, Update, Delete (CRUD) Memories</li>
-  <li>Add Tags to Memories</li>
-  <li>Responsive Design for Mobile and Desktop</li>
-</ul>
+A social app for sharing travel moments: post a photo and a story, like and comment, discover places through tags, and follow people's profiles.
 
-<h2>Technologies Used</h2>
-<li><strong>Frontend</strong>: React, Redux, Material-UI</li>
-<li><strong>Backend</strong>: Node.js, Express</li>
-<li><strong>Database</strong>: MongoDB</li>
-<li><strong>Authentication</strong>: JWT (JSON Web Tokens) </li>
-<li><strong>Styling</strong>: CSS, Material-UI</li>
+**Live demo:** https://create-memories-webapp.netlify.app. Use **Try the demo account** on the login page, or sign up.
 
-<h2>Usage</h2>
-<li><strong>Register an Account:</strong></li>
-<li><strong>Login: </strong>Use your credentials to log in.</li>
-<li><strong>Create a Memory: </strong>Add a new memory by providing a title, content, and tags.</li>
-<li><strong>View Memories: </strong>Browse through your memories.</li>
-<li><strong>Update Memory: </strong> Edit the content of an existing memory.</li>
-<li><strong>Delete Memory: </strong>Remove a memory from your collection.</li>
-<li><strong>Search Memories: </strong>Use the search bar to find memories by title or tags.</li>
+## Features
 
+- **Feed**: masonry layout with Latest / Popular / Liked-by-me tabs, pagination and loading skeletons
+- **Search** across titles, stories and tags; **trending tags** sidebar
+- **Posts**: photo upload (compressed in the browser), title, story and up to 8 tags; edit and delete your own
+- **Likes**: optimistic UI. The heart updates instantly on every cached copy and rolls back if the request fails
+- **Comments**: add yours; delete your own, or any comment on your post
+- **Post pages** with share links and "You might also like" (related by tags)
+- **Profiles**: bio, join date, stats (memories, likes received, comments) and the user's posts
+- **Dark mode** (follows the system, toggle saved), responsive down to small phones
 
-<h2>API Endpoints</h2>
-<h3>Auth</h3>
-<li>POST /api/auth/register: Register a new user</li>
-<li>POST /api/auth/login: Login a user</li>
+## Tech stack
 
-<h3>Memories</h3>
-<li>GET /api/memories: Get all memories</li>
-<li>GET /api/memories/</li>
-: Get a single memory by ID
-<li>POST /api/memories: Create a new memory</li>
-<li>PUT /api/memories/</li>
-: Update a memory by ID
-<li>DELETE /api/memories/</li>
-: Delete a memory by ID
+| Layer | Tech |
+|---|---|
+| Frontend | React 18, **Redux Toolkit + RTK Query** (caching, tag invalidation, optimistic updates), **Material UI v6**, React Router, Vite |
+| Backend | Node.js, Express, Mongoose, JWT, bcrypt, Multer |
+| Database | MongoDB Atlas; photos in **GridFS** |
+| Hosting | One Netlify site: static frontend + the Express API as a Netlify Function at `/api/*` |
 
+### Security
+
+- JWT signed with a secret from the environment (never in code), 7-day expiry
+- Only a post's author can edit or delete it; only the comment's author or the post's owner can delete a comment
+- Input is validated and normalised on the server: lengths, tag format, and photo URLs restricted to this app's own uploads
+- Secrets live in Netlify environment variables. `.env` is git-ignored, and `.env.example` documents what's needed.
+
+## Project structure
+
+```
+client/src/features/api.js     RTK Query endpoints + optimistic cache patches
+client/src/features/authSlice  Session (persisted)
+client/src/pages/              Feed, PostPage, Profile, AuthPage
+client/src/components/         PostCard, PostEditor, Layout, ...
+server/app.js                  Express API
+server/models/                 User, Post (with embedded comments)
+server/seed.js                 Demo memories, authors, likes, comments
+netlify/functions/api.js       Express as a serverless function
+```
+
+## Running locally
+
+```bash
+npm install && npm --prefix client install
+cp .env.example .env         # fill in MONGO_URL and JWT_SECRET
+npm run seed                 # optional demo content
+npm run dev:server           # API on :4000
+npm run dev:client           # app on :5173 (proxies /api)
+```
+
+## API
+
+| Method | Path | Auth | |
+|---|---|---|---|
+| POST | `/api/auth/register`, `/api/auth/login` | | `{ token, user }` |
+| GET / PATCH | `/api/auth/me` | ✓ | Current user / update name & bio |
+| GET | `/api/posts?page&q&tag&author&sort=popular&liked=me` | optional | Paginated feed |
+| GET | `/api/posts/:id`, `/api/posts/:id/related` | optional | Post with comments, related posts |
+| POST / PATCH / DELETE | `/api/posts`, `/api/posts/:id` | ✓ | Create / edit / delete (author only) |
+| POST | `/api/posts/:id/like` | ✓ | Toggle like |
+| POST / DELETE | `/api/posts/:id/comments[/:commentId]` | ✓ | Add / delete comment |
+| GET | `/api/tags`, `/api/users/:id` | | Trending tags, profile + stats |
+| POST / GET | `/api/upload`, `/api/photos/:id` | ✓ / | Upload / serve photos |
+
+Demo photos are public-domain / CC0 images from [Wikimedia Commons](https://commons.wikimedia.org). Demo people are fictional.
